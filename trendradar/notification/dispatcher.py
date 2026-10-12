@@ -155,7 +155,11 @@ class NotificationDispatcher:
                     titles_to_translate.append(item.get("title", ""))
                     title_locations.append(("standalone_rss", feed_idx, item_idx))
                     # 摘要（国际新闻浓缩观点），一并翻译为中文
+                    # 先截断到 200 字，避免超长摘要撑大单次请求、导致 AI 输出被 max_tokens 截断
+                    # （输出被截断会让靠后的标题/摘要翻译为空，从而保留英文原文）
                     summary = (item.get("summary", "") or "").strip()
+                    if len(summary) > 200:
+                        summary = summary[:200].rstrip()
                     if summary:
                         titles_to_translate.append(summary)
                         title_locations.append(("standalone_rss_summary", feed_idx, item_idx))

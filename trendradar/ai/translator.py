@@ -188,15 +188,28 @@ class AITranslator:
             batch_result.parsed_count = raw_parsed_count
 
             # 填充结果（跳过空翻译，避免用空字符串覆盖原始标题）
+            retry_indices = []  # 记录 (索引, 原文) 待重试
             for idx, translated in zip(non_empty_indices, translated_texts):
                 if translated and translated.strip():
                     batch_result.results[idx].translated_text = translated
                     batch_result.results[idx].success = True
                     batch_result.success_count += 1
                 else:
-                    batch_result.results[idx].translated_text = batch_result.results[idx].original_text
-                    batch_result.results[idx].success = True
-                    batch_result.success_count += 1
+                    # AI 输出被截断或漏项导致翻译为空，先保留原文，稍后逐条重试
+                    retry_indices.append((idx, batch_result.results[idx].original_text))
+
+            # 对翻译为空的条目逐条重试，确保标题/摘要都能翻译成中文
+            for idx, original in retry_indices:
+                try:
+                    retry_result = self.translate(original)
+                    if retry_result.success and retry_result.translated_text and retry_result.translated_text.strip():
+                        batch_result.results[idx].translated_text = retry_result.translated_text
+                    else:
+                        batch_result.results[idx].translated_text = original
+                except Exception:
+                    batch_result.results[idx].translated_text = original
+                batch_result.results[idx].success = True
+                batch_result.success_count += 1
 
         except Exception as e:
             error_msg = f"批量翻译失败: {type(e).__name__}: {str(e)[:100]}"
