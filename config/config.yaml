@@ -40,8 +40,8 @@ app:
 # 详细时间线图请查看 config/timeline.yaml
 # ===============================================================
 schedule:
-  enabled: false                        # 是否启用调度系统（true=启用, false=关闭，默认关闭）
-  preset: "morning_evening"             # 预设模板名称（见上方说明）
+  enabled: true                         # 是否启用调度系统（true=启用, false=关闭，默认关闭）
+  preset: "custom"                      # 使用 timeline.yaml 底部「自定义模式」的三段式推送
 
 
 # ===============================================================
@@ -78,18 +78,12 @@ platforms:
     - id: "thepaper"
       name: "澎湃新闻"
       expected_domain: "thepaper.cn"
-    - id: "bilibili-hot-search"
-      name: "bilibili 热搜"
-      expected_domain: "bilibili.com"
     - id: "cls-hot"
       name: "财联社热门"
       expected_domain: "cls.cn"
     - id: "ifeng"
       name: "凤凰网"
       expected_domain: "ifeng.com"
-    - id: "tieba"
-      name: "贴吧"
-      expected_domain: "baidu.com"
     - id: "weibo"
       name: "微博"
       expected_domain: "weibo.com"
@@ -140,6 +134,33 @@ rss:
     - id: "yahoo-finance"
       name: "雅虎财经"
       url: "https://finance.yahoo.com/news/rssindex"
+
+    # ── 国际权威媒体（英文源，推送时自动翻译为中文标题）──
+    # 注：CNN/路透社/彭博社已停用官方 RSS，此处用 Google News 的 site: 检索源代替；
+    #     BBC / 美联社 / 纽约时报 为官方 RSS。
+    - id: "bbc"
+      name: "BBC 新闻"
+      url: "https://feeds.bbci.co.uk/news/world/rss.xml"
+
+    - id: "cnn"
+      name: "CNN"
+      url: "https://news.google.com/rss/search?q=site:cnn.com&hl=en-US&gl=US&ceid=US:en"
+
+    - id: "bloomberg"
+      name: "彭博社 Bloomberg"
+      url: "https://news.google.com/rss/search?q=site:bloomberg.com&hl=en-US&gl=US&ceid=US:en"
+
+    - id: "reuters"
+      name: "路透社 Reuters"
+      url: "https://news.google.com/rss/search?q=site:reuters.com&hl=en-US&gl=US&ceid=US:en"
+
+    - id: "ap"
+      name: "美联社 AP"
+      url: "https://feeds.apnews.com/apnews/topnews"
+
+    - id: "nyt"
+      name: "纽约时报 NYT"
+      url: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
 
     # 自定义源示例
     # - id: "custom-feed"
@@ -239,15 +260,15 @@ display:
                                       # 注：热点词汇统计中的新增标记🆕不受此配置影响
 
     rss: true                         # RSS 订阅区域（true=显示并分析, false=隐藏并跳过分析）
-    standalone: false                 # 独立展示区：完整热榜/RSS，不受关键词过滤（true=显示, false=隐藏）
+    standalone: true                  # 独立展示区：完整热榜/RSS，不受关键词过滤（true=显示, false=隐藏）
     ai_analysis: true                 # AI 分析区域（true=显示, false=隐藏）
 
   # 独立展示区：将指定平台/RSS 完整展示，不受关键词过滤
   # 推送展示由 regions.standalone 控制，AI 分析由 ai_analysis.include_standalone 控制
   standalone:
-    platforms: ["zhihu", "wallstreetcn-hot"]     # 热榜平台 ID 列表（如 ["zhihu", "weibo"]）
-    rss_feeds: []                                # RSS 源 ID 列表（如 ["hacker-news"]）
-    max_items: 20                                # 每个源最多展示条数（0=不限制）
+    platforms: []                                # 热榜平台 ID 列表（留空：不完整展示中文热榜）
+    rss_feeds: ["bbc", "cnn", "bloomberg", "reuters", "ap", "nyt"]  # 国际权威媒体完整头条
+    max_items: 10                                # 每个源最多展示条数（0=不限制）
 
 
 # ===============================================================
