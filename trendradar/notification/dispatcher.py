@@ -154,6 +154,11 @@ class NotificationDispatcher:
                 for item_idx, item in enumerate(feed.get("items", [])):
                     titles_to_translate.append(item.get("title", ""))
                     title_locations.append(("standalone_rss", feed_idx, item_idx))
+                    # 摘要（国际新闻浓缩观点），一并翻译为中文
+                    summary = (item.get("summary", "") or "").strip()
+                    if summary:
+                        titles_to_translate.append(summary)
+                        title_locations.append(("standalone_rss_summary", feed_idx, item_idx))
 
         if not titles_to_translate:
             print("[翻译] 没有需要翻译的内容")
@@ -242,6 +247,8 @@ class NotificationDispatcher:
                     standalone_data["platforms"][idx1]["items"][idx2]["title"] = translated
                 elif loc_type == "standalone_rss" and standalone_data:
                     standalone_data["rss_feeds"][idx1]["items"][idx2]["title"] = translated
+                elif loc_type == "standalone_rss_summary" and standalone_data:
+                    standalone_data["rss_feeds"][idx1]["items"][idx2]["summary"] = translated
 
         return report_data, rss_items, rss_new_items, standalone_data
 

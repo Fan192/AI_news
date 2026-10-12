@@ -295,7 +295,7 @@ class AppContext:
         frequency_file: Optional[str] = None,
     ) -> Dict:
         """准备报告数据"""
-        return prepare_report_data(
+        report_data = prepare_report_data(
             stats=stats,
             failed_ids=failed_ids,
             new_titles=new_titles,
@@ -304,6 +304,25 @@ class AppContext:
             rank_threshold=self.rank_threshold,
             show_new_section=self.show_new_section,
         )
+
+        # 限制热榜（国内）总条数：按词组顺序截断，最多保留 max_total_items 条
+        max_total = self.config.get("MAX_TOTAL_ITEMS", 0)
+        if max_total > 0:
+            remaining = max_total
+            truncated_stats = []
+            for stat in report_data.get("stats", []):
+                titles = stat.get("titles", [])
+                if remaining <= 0:
+                    break  # 已满，丢弃后续词组（避免出现空标题词组）
+                if len(titles) > remaining:
+                    stat["titles"] = titles[:remaining]
+                    remaining = 0
+                else:
+                    remaining -= len(titles)
+                truncated_stats.append(stat)
+            report_data["stats"] = truncated_stats
+
+        return report_data
 
     def generate_html(
         self,

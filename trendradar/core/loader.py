@@ -80,6 +80,7 @@ def _load_report_config(config_data: Dict) -> Dict:
         "RANK_THRESHOLD": report_config.get("rank_threshold", 10),
         "SORT_BY_POSITION_FIRST": sort_by_position_env if sort_by_position_env is not None else report_config.get("sort_by_position_first", False),
         "MAX_NEWS_PER_KEYWORD": max_news_env if max_news_env is not None else report_config.get("max_news_per_keyword", 0),
+        "MAX_TOTAL_ITEMS": report_config.get("max_total_items", 0),
     }
 
 
@@ -246,6 +247,7 @@ def _load_display_config(config_data: Dict) -> Dict:
             "PLATFORMS": standalone.get("platforms", []),
             "RSS_FEEDS": standalone.get("rss_feeds", []),
             "MAX_ITEMS": standalone.get("max_items", 20),
+            "MAX_TOTAL_ITEMS": standalone.get("max_total_items", 0),
         },
     }
 

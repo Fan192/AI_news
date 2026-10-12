@@ -209,7 +209,7 @@ def split_content_into_batches(
 
     now = get_time_func() if get_time_func else datetime.now()
 
-    # 构建头部信息
+    # 构建头部信息（精简为单行，避免每个批次重复冗长统计表头）
     base_header = ""
 
     # 格式化粗体标记
@@ -220,90 +220,19 @@ def split_content_into_batches(
     else:
         b_s, b_e = "**", "**"
 
-    # 提取统计数据
-    hotlist_total = report_data.get("hotlist_total", total_hotlist_count)
-    new_count = report_data.get("total_new_count", 0)
-    platform_total = report_data.get("platform_total", 0)
-    failed_count = len(report_data.get("failed_ids", []))
-    platform_success = platform_total - failed_count if platform_total else 0
-    rss_matched = report_data.get("rss_matched_count", 0)
-    rss_total_items = report_data.get("rss_total_count", 0)
-    rss_source_total = report_data.get("rss_source_total", 0)
-    rss_source_failed = report_data.get("rss_source_failed", 0)
-    rss_source_success = max(0, rss_source_total - rss_source_failed)
-
-    # === 上半部分：数据统计 ===
-
-    # 1. 总新闻
-    rss_new_count = sum(len(stat.get("titles", [])) for stat in (rss_new_items or []))
-    total_new = new_count + rss_new_count
-    total_news_line = f"{b_s}总新闻：{b_e} {total_titles} 条"
-    if total_new > 0:
-        total_news_line += f"（新增 {new_count} + {rss_new_count}）"
-    base_header += f"{total_news_line}\n"
-
-    # 2. 热榜
-    hotlist_info = f"{b_s}热榜：{b_e} {total_hotlist_count}/{hotlist_total}"
-    if platform_total > 0:
-        hotlist_info += f"（平台 {platform_success}/{platform_total}）"
-    base_header += f"{hotlist_info}\n"
-
-    # 3. RSS
-    if rss_source_total > 0:
-        rss_info = f"{b_s}RSS：{b_e} {rss_matched}/{rss_total_items}（源 {rss_source_success}/{rss_source_total}）"
-        base_header += f"{rss_info}\n"
-
-    # 4. 独立展示区（仅在有数据时显示）
+    # 独立展示区（国外新闻）总条数
+    sa_total = 0
     if standalone_data:
-        sa_platform_count = sum(len(p.get("items", [])) for p in standalone_data.get("platforms", []))
-        sa_rss_count = sum(len(f.get("items", [])) for f in standalone_data.get("rss_feeds", []))
-        sa_total = sa_platform_count + sa_rss_count
-        if sa_total > 0:
-            sa_parts = []
-            if sa_platform_count > 0:
-                sa_parts.append(f"热榜 {sa_platform_count}")
-            if sa_rss_count > 0:
-                sa_parts.append(f"RSS {sa_rss_count}")
-            base_header += f"{b_s}独立展示：{b_e} {sa_total} 条（{' + '.join(sa_parts)}）\n"
+        sa_total = (
+            sum(len(p.get("items", [])) for p in standalone_data.get("platforms", []))
+            + sum(len(f.get("items", [])) for f in standalone_data.get("rss_feeds", []))
+        )
 
-    # 5. AI 分析（仅在有分析数据时显示）
-    standalone_analyzed = ai_stats.get("standalone_analyzed", 0) if ai_stats else 0
-    ai_has_data = ai_stats and (ai_stats.get("analyzed_news", 0) > 0 or standalone_analyzed > 0)
-    if ai_has_data:
-        hotlist_analyzed = ai_stats.get("hotlist_analyzed", 0)
-        rss_analyzed = ai_stats.get("rss_analyzed", 0)
-        ai_mode_val = ai_stats.get("ai_mode", "")
-
-        ai_parts = [str(hotlist_analyzed)]
-        if ai_stats.get("include_rss", True):
-            ai_parts.append(str(rss_analyzed))
-        if ai_stats.get("include_standalone", False):
-            ai_parts.append(str(standalone_analyzed))
-        ai_display = " + ".join(ai_parts) if sum(int(p) for p in ai_parts) > 0 else "0"
-
-        mode_suffix = ""
-        if ai_mode_val and ai_mode_val != mode:
-            mode_map = {"daily": "全天汇总", "current": "当前榜单", "incremental": "增量分析"}
-            mode_suffix = f" [{mode_map.get(ai_mode_val, ai_mode_val)}]"
-
-        base_header += f"{b_s}AI 分析：{b_e} {ai_display}{mode_suffix}\n"
-
-    # === 空行分隔 ===
-    base_header += "\n"
-
-    # === 下半部分：元信息 ===
-    base_header += f"{b_s}类型：{b_e} {report_type}\n"
-    base_header += f"{b_s}时间：{b_e} {now.strftime('%Y-%m-%d %H:%M:%S')}\n"
-
-    top_words = report_data.get("stats", [])[:3]
-    if top_words:
-        topics = " | ".join(f"{s['word']}({s['count']})" for s in top_words)
-        base_header += f"{b_s}最热话题：{b_e} {topics}\n"
-
-    if format_type in ("feishu", "dingtalk"):
-        base_header += "\n---\n\n"
-    else:
-        base_header += "\n"
+    header_parts = [now.strftime("%m-%d %H:%M")]
+    header_parts.append(f"国内 {total_hotlist_count} 条")
+    if sa_total > 0:
+        header_parts.append(f"国外 {sa_total} 条")
+    base_header = f"{b_s}📰 热点速递{b_e} · " + " · ".join(header_parts) + "\n\n"
 
     base_footer = ""
     if format_type in ("wework", "bark"):
@@ -1810,7 +1739,7 @@ def _format_standalone_rss_item(
     """格式化独立展示区的 RSS 条目
 
     Args:
-        item: RSS 条目，包含 title, url, published_at, author
+        item: RSS 条目，包含 title, url, published_at, author, summary
         index: 序号
         format_type: 格式类型
         timezone: 时区名称
@@ -1822,6 +1751,9 @@ def _format_standalone_rss_item(
     url = item.get("url", "")
     published_at = item.get("published_at", "")
     author = item.get("author", "")
+    summary = (item.get("summary", "") or "").strip()
+    if len(summary) > 200:
+        summary = summary[:200].rstrip() + "…"
 
     # 使用友好时间格式
     friendly_time = ""
@@ -1835,6 +1767,18 @@ def _format_standalone_rss_item(
     if author:
         meta_parts.append(author)
     meta_str = ", ".join(meta_parts)
+
+    # 摘要行（国际新闻中文浓缩观点）
+    summary_line = ""
+    if summary:
+        if format_type == "feishu":
+            summary_line = f"\n     <font color='grey'>{summary}</font>"
+        elif format_type == "slack":
+            summary_line = f"\n     _{summary}_"
+        elif format_type == "telegram":
+            summary_line = f"\n     {summary}"
+        else:
+            summary_line = f"\n     > {summary}"
 
     # 根据格式类型构建条目行
     if format_type == "feishu":
@@ -1867,5 +1811,6 @@ def _format_standalone_rss_item(
         if meta_str:
             item_line += f" `{meta_str}`"
 
+    item_line += summary_line
     item_line += "\n"
     return item_line

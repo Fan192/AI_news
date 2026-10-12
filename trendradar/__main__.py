@@ -612,6 +612,8 @@ class NewsAnalyzer:
 
         # 提取 RSS 数据
         if rss_items and rss_feed_ids:
+            max_total_items = standalone_config.get("MAX_TOTAL_ITEMS", 0)
+
             # 按 feed_id 分组
             feed_items_map = {}
             for item in rss_items:
@@ -627,15 +629,47 @@ class NewsAnalyzer:
                         "url": item.get("url", ""),
                         "published_at": item.get("published_at", ""),
                         "author": item.get("author", ""),
+                        "summary": item.get("summary", ""),
                     })
 
-            # 限制条数并添加到结果
+            # 限制每个源条数
             for feed_id in rss_feed_ids:
                 if feed_id in feed_items_map:
                     feed_data = feed_items_map[feed_id]
                     items = feed_data["items"]
                     if max_items > 0:
                         items = items[:max_items]
+                    feed_data["items"] = items
+
+            # 限制总条数（跨所有源轮询截断，保证来源多样性）
+            if max_total_items > 0:
+                feeds_to_keep = [
+                    feed_items_map[feed_id]
+                    for feed_id in rss_feed_ids
+                    if feed_id in feed_items_map and feed_items_map[feed_id]["items"]
+                ]
+                interleaved = []
+                max_feed_len = max((len(f["items"]) for f in feeds_to_keep), default=0)
+                for i in range(max_feed_len):
+                    for f in feeds_to_keep:
+                        if i < len(f["items"]):
+                            interleaved.append((f, f["items"][i]))
+                            if len(interleaved) >= max_total_items:
+                                break
+                    if len(interleaved) >= max_total_items:
+                        break
+
+                selected_map = {id(f): [] for f in feeds_to_keep}
+                for f, item in interleaved:
+                    selected_map[id(f)].append(item)
+                for f in feeds_to_keep:
+                    f["items"] = selected_map[id(f)]
+
+            # 添加到结果
+            for feed_id in rss_feed_ids:
+                if feed_id in feed_items_map:
+                    feed_data = feed_items_map[feed_id]
+                    items = feed_data["items"]
                     if items:
                         standalone_data["rss_feeds"].append({
                             "id": feed_id,
