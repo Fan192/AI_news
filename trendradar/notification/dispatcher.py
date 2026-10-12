@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import re
 import time
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
@@ -166,10 +167,16 @@ class NotificationDispatcher:
                     if summary and title_text:
                         if summary == title_text:
                             is_dup = True
-                        elif summary.startswith(title_text) and (len(summary) - len(title_text)) <= 20:
-                            # 摘要 = 标题 + 少量尾部文字（如重复的来源名），视为重复
-                            is_dup = True
-                    print(f"[翻译][DEBUG][summary] feed={feed.get('name','')!r} title={title_text[:80]!r} summary={summary[:80]!r} dup={is_dup}")
+                        else:
+                            # Google News 源：title="标题 - 来源"、summary="标题 来源"，仅分隔符不同
+                            # 归一化（把「 - / —」当作普通空格）后再比较
+                            norm_title = re.sub(r"\s*[-—–]\s*", " ", title_text).strip()
+                            norm_summary = re.sub(r"\s*[-—–]\s*", " ", summary).strip()
+                            if norm_summary == norm_title:
+                                is_dup = True
+                            elif norm_summary.startswith(norm_title) and (len(norm_summary) - len(norm_title)) <= 20:
+                                # 摘要 = 标题 + 少量尾部文字（如重复的来源名），视为重复
+                                is_dup = True
                     if is_dup:
                         standalone_data["rss_feeds"][feed_idx]["items"][item_idx]["summary"] = ""
                         summary = ""
