@@ -136,27 +136,28 @@ rss:
       url: "https://finance.yahoo.com/news/rssindex"
 
     # ── 国际权威媒体（英文源，推送时自动翻译为中文标题）──
-    # 注：CNN/路透社/彭博社已停用官方 RSS，此处用 Google News 的 site: 检索源代替；
-    #     BBC / 美联社 / 纽约时报 为官方 RSS。
+    # 注：CNN/路透社/彭博社/美联社 的官方 RSS 已停用或不便直连，
+    #     统一改用 Google News 的 site: 检索源代替（冒号需编码为 %3A）；
+    #     BBC / 纽约时报 为官方 RSS。
     - id: "bbc"
       name: "BBC 新闻"
       url: "https://feeds.bbci.co.uk/news/world/rss.xml"
 
     - id: "cnn"
       name: "CNN"
-      url: "https://news.google.com/rss/search?q=site:cnn.com&hl=en-US&gl=US&ceid=US:en"
+      url: "https://news.google.com/rss/search?q=site%3Acnn.com&hl=en-US&gl=US&ceid=US:en"
 
     - id: "bloomberg"
       name: "彭博社 Bloomberg"
-      url: "https://news.google.com/rss/search?q=site:bloomberg.com&hl=en-US&gl=US&ceid=US:en"
+      url: "https://news.google.com/rss/search?q=site%3Abloomberg.com&hl=en-US&gl=US&ceid=US:en"
 
     - id: "reuters"
       name: "路透社 Reuters"
-      url: "https://news.google.com/rss/search?q=site:reuters.com&hl=en-US&gl=US&ceid=US:en"
+      url: "https://news.google.com/rss/search?q=site%3Areuters.com&hl=en-US&gl=US&ceid=US:en"
 
     - id: "ap"
       name: "美联社 AP"
-      url: "https://feeds.apnews.com/apnews/topnews"
+      url: "https://news.google.com/rss/search?q=site%3Aapnews.com&hl=en-US&gl=US&ceid=US:en"
 
     - id: "nyt"
       name: "纽约时报 NYT"
