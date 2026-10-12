@@ -3,7 +3,7 @@ name: Get Hot News
 on:
   schedule:
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # ⚠️ 试用版说明 / Trial Mode
+    # ⚠️ 试用 版说明 / Trial Mode
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     #
     # 🔄 运行机制 / How it works:
@@ -88,7 +88,7 @@ jobs:
               exit 1
             else
               DAYS_LEFT=$(( (LIMIT_SECONDS - DIFF_SECONDS) / 86400 ))
-              echo "✅ 试用期剩余 ${DAYS_LEFT} 天，到期前请运行 'Check In' 签到续期"
+              echo "✅ 试用期 剩余 ${DAYS_LEFT} 天，到期前请运行 'Check In' 签到续期"
               echo "✅ Trial: ${DAYS_LEFT} days left. Run 'Check In' before expiry to renew."
             fi
           fi
