@@ -412,7 +412,8 @@ custom:
                                    #   daily         → 强制全天汇总
                                    #   current       → 强制当前榜单
                                    #   incremental   → 强制增量模式
-    push: false                    # 是否发送推送通知
+    push: true                     # 是否发送推送通知
+                                   #   true = 即使不在三次定时窗口内（如手动运行 workflow），也照常推送
     report_mode: "current"         # 报告模式:
                                    #   daily       → 当日所有新闻的汇总
                                    #   current     → 当前在榜的新闻
