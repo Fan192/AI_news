@@ -1752,6 +1752,9 @@ def _format_standalone_rss_item(
     published_at = item.get("published_at", "")
     author = item.get("author", "")
     summary = (item.get("summary", "") or "").strip()
+    # 若摘要与标题重复（如 Google News 源的 description 就是标题），不显示摘要行
+    if summary and title.strip() == summary:
+        summary = ""
     if len(summary) > 200:
         summary = summary[:200].rstrip() + "…"
 

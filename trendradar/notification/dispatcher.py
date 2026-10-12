@@ -158,7 +158,12 @@ class NotificationDispatcher:
                     # 先截断到 200 字，避免超长摘要撑大单次请求、导致 AI 输出被 max_tokens 截断
                     # （输出被截断会让靠后的标题/摘要翻译为空，从而保留英文原文）
                     summary = (item.get("summary", "") or "").strip()
-                    if len(summary) > 200:
+                    # 若摘要与标题重复（如 Google News 源的 description 就是标题），
+                    # 直接清除摘要，既不翻译也不展示，避免推送里标题下方出现重复内容
+                    if summary and summary == (item.get("title", "") or "").strip():
+                        standalone_data["rss_feeds"][feed_idx]["items"][item_idx]["summary"] = ""
+                        summary = ""
+                    elif len(summary) > 200:
                         summary = summary[:200].rstrip()
                     if summary:
                         titles_to_translate.append(summary)
