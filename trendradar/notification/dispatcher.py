@@ -169,6 +169,7 @@ class NotificationDispatcher:
                         elif summary.startswith(title_text) and (len(summary) - len(title_text)) <= 20:
                             # 摘要 = 标题 + 少量尾部文字（如重复的来源名），视为重复
                             is_dup = True
+                    print(f"[翻译][DEBUG][summary] feed={feed.get('name','')!r} title={title_text[:80]!r} summary={summary[:80]!r} dup={is_dup}")
                     if is_dup:
                         standalone_data["rss_feeds"][feed_idx]["items"][item_idx]["summary"] = ""
                         summary = ""
