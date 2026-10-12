@@ -150,6 +150,7 @@ class NotificationDispatcher:
                     title_locations.append(("standalone_platforms", plat_idx, item_idx))
 
             # 6. 独立展示区 - RSS 源
+            dedup_count = 0
             for feed_idx, feed in enumerate(standalone_data.get("rss_feeds", [])):
                 for item_idx, item in enumerate(feed.get("items", [])):
                     titles_to_translate.append(item.get("title", ""))
@@ -158,16 +159,27 @@ class NotificationDispatcher:
                     # 先截断到 200 字，避免超长摘要撑大单次请求、导致 AI 输出被 max_tokens 截断
                     # （输出被截断会让靠后的标题/摘要翻译为空，从而保留英文原文）
                     summary = (item.get("summary", "") or "").strip()
-                    # 若摘要与标题重复（如 Google News 源的 description 就是标题），
+                    title_text = (item.get("title", "") or "").strip()
+                    # 若摘要与标题重复（Google News 源的 description 就是标题，或「标题 + 来源名」），
                     # 直接清除摘要，既不翻译也不展示，避免推送里标题下方出现重复内容
-                    if summary and summary == (item.get("title", "") or "").strip():
+                    is_dup = False
+                    if summary and title_text:
+                        if summary == title_text:
+                            is_dup = True
+                        elif summary.startswith(title_text) and (len(summary) - len(title_text)) <= 20:
+                            # 摘要 = 标题 + 少量尾部文字（如重复的来源名），视为重复
+                            is_dup = True
+                    if is_dup:
                         standalone_data["rss_feeds"][feed_idx]["items"][item_idx]["summary"] = ""
                         summary = ""
+                        dedup_count += 1
                     elif len(summary) > 200:
                         summary = summary[:200].rstrip()
                     if summary:
                         titles_to_translate.append(summary)
                         title_locations.append(("standalone_rss_summary", feed_idx, item_idx))
+            if dedup_count > 0:
+                print(f"[翻译] 已清除 {dedup_count} 条与标题重复的摘要")
 
         if not titles_to_translate:
             print("[翻译] 没有需要翻译的内容")
