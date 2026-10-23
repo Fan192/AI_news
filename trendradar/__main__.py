@@ -8,6 +8,7 @@ TrendRadar 主程序
 
 import argparse
 import os
+import re
 import webbrowser
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -1150,6 +1151,22 @@ class NewsAnalyzer:
             word_groups, filter_words, global_filters = self.ctx.load_frequency_words(self.frequency_file)
         except FileNotFoundError:
             word_groups, filter_words, global_filters = [], [], []
+
+        # 按 rss.exclude_word_groups 隐藏指定词组（仅影响 RSS 统计，国内热榜仍照常统计）
+        excluded_groups = {
+            re.sub(r"\s+", "", str(name))
+            for name in (self.ctx.config.get("RSS", {}).get("EXCLUDE_WORD_GROUPS", []) or [])
+            if str(name).strip()
+        }
+        if excluded_groups and word_groups:
+            filtered_groups = [
+                g for g in word_groups
+                if re.sub(r"\s+", "", str(g.get("display_name") or "")) not in excluded_groups
+            ]
+            removed = len(word_groups) - len(filtered_groups)
+            if removed > 0:
+                print(f"[RSS] 按配置隐藏 {removed} 个词组（RSS 统计不展示）")
+            word_groups = filtered_groups
 
         timezone = self.ctx.timezone
         max_news_per_keyword = self.ctx.config.get("MAX_NEWS_PER_KEYWORD", 0)

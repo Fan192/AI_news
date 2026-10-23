@@ -206,6 +206,8 @@ def _load_rss_config(config_data: Dict) -> Dict:
         "USE_PROXY": advanced_rss.get("use_proxy", False),
         "PROXY_URL": rss_proxy_url,
         "FEEDS": rss.get("feeds", []),
+        # RSS 关键词统计中要隐藏的词组（按词组显示名匹配，不影响国内热榜）
+        "EXCLUDE_WORD_GROUPS": rss.get("exclude_word_groups", []),
         "FRESHNESS_FILTER": {
             "ENABLED": freshness_filter.get("enabled", True),  # 默认启用
             "MAX_AGE_DAYS": max_age_days,

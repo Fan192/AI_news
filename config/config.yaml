@@ -116,6 +116,14 @@ rss:
                                       # - 正整数：只推送 N 天内的文章
                                       # - 0：禁用过滤，推送所有文章
 
+  # RSS 关键词统计中要隐藏的词组（按 frequency_words.txt 里的显示名匹配）
+  # 只影响「📰 RSS 订阅统计」这一段，国内热榜不受影响
+  # 例：京东 组会误匹配「JD·万斯」，特斯拉 / OpenAI 在 RSS 里通常只有零星 1 条，属于噪声
+  exclude_word_groups:
+    - 京东
+    - OpenAI / Claude
+    - 特斯拉
+
   # 单个 feed 可配置 max_age_days 覆盖全局设置：
   # - 不配置：使用全局 freshness_filter.max_age_days（默认 3 天）
   # - 正整数：覆盖全局设置，只推送此天数内的文章
