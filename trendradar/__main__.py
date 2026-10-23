@@ -1309,6 +1309,11 @@ class NewsAnalyzer:
                 )
 
         self._rss_total_count = total
+
+        # 在这里统一限流（而不是等到分批推送时）：HTML 报告、AI 翻译都只处理保留的条目，
+        # 既节省 AI token，也让网页报告体积更小
+        rss_stats = self.ctx._limit_rss_stats(rss_stats)
+
         return rss_stats, rss_new_stats, raw_rss_items, rss_new_urls
 
     def _convert_rss_items_to_list(self, items_dict: Dict, id_to_name: Dict) -> List[Dict]:

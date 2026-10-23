@@ -522,9 +522,6 @@ class AppContext:
         Returns:
             分批后的消息内容列表
         """
-        # 「RSS 订阅统计」限流：按媒体轮流挑选，控制在配置的条数内
-        rss_items = self._limit_rss_stats(rss_items)
-
         return split_content_into_batches(
             report_data=report_data,
             format_type=format_type,
