@@ -207,58 +207,12 @@ def split_content_into_batches(
     if rss_items:
         total_titles += sum(stat.get("count", 0) for stat in rss_items)
 
-    now = get_time_func() if get_time_func else datetime.now()
-
-    # 构建头部信息（精简为单行，避免每个批次重复冗长统计表头）
+    # 头部/尾部信息已按需求移除：
+    # - 头部「📰 热点速递 · 时间 · 国内 X 条 · 国外 Y 条」会在每个批次重复出现
+    # - 尾部「更新时间」「发现新版本」同样在每一批消息末尾重复，属于噪声
+    # 批次之间只保留正文与各区域标题，避免阅读时被打断
     base_header = ""
-
-    # 格式化粗体标记
-    if format_type == "slack":
-        b_s, b_e = "*", "*"
-    elif format_type == "telegram":
-        b_s, b_e = "", ""
-    else:
-        b_s, b_e = "**", "**"
-
-    # 独立展示区（国外新闻）总条数
-    sa_total = 0
-    if standalone_data:
-        sa_total = (
-            sum(len(p.get("items", [])) for p in standalone_data.get("platforms", []))
-            + sum(len(f.get("items", [])) for f in standalone_data.get("rss_feeds", []))
-        )
-
-    header_parts = [now.strftime("%m-%d %H:%M")]
-    header_parts.append(f"国内 {total_hotlist_count} 条")
-    if sa_total > 0:
-        header_parts.append(f"国外 {sa_total} 条")
-    base_header = f"{b_s}📰 热点速递{b_e} · " + " · ".join(header_parts) + "\n\n"
-
     base_footer = ""
-    if format_type in ("wework", "bark"):
-        base_footer = f"\n\n\n> 更新时间：{now.strftime('%Y-%m-%d %H:%M:%S')}"
-        if update_info:
-            base_footer += f"\n> TrendRadar 发现新版本 **{update_info['remote_version']}**，当前 **{update_info['current_version']}**"
-    elif format_type == "telegram":
-        base_footer = f"\n\n更新时间：{now.strftime('%Y-%m-%d %H:%M:%S')}"
-        if update_info:
-            base_footer += f"\nTrendRadar 发现新版本 {update_info['remote_version']}，当前 {update_info['current_version']}"
-    elif format_type == "ntfy":
-        base_footer = f"\n\n> 更新时间：{now.strftime('%Y-%m-%d %H:%M:%S')}"
-        if update_info:
-            base_footer += f"\n> TrendRadar 发现新版本 **{update_info['remote_version']}**，当前 **{update_info['current_version']}**"
-    elif format_type == "feishu":
-        base_footer = f"\n\n<font color='grey'>更新时间：{now.strftime('%Y-%m-%d %H:%M:%S')}</font>"
-        if update_info:
-            base_footer += f"\n<font color='grey'>TrendRadar 发现新版本 {update_info['remote_version']}，当前 {update_info['current_version']}</font>"
-    elif format_type == "dingtalk":
-        base_footer = f"\n\n> 更新时间：{now.strftime('%Y-%m-%d %H:%M:%S')}"
-        if update_info:
-            base_footer += f"\n> TrendRadar 发现新版本 **{update_info['remote_version']}**，当前 **{update_info['current_version']}**"
-    elif format_type == "slack":
-        base_footer = f"\n\n_更新时间：{now.strftime('%Y-%m-%d %H:%M:%S')}_"
-        if update_info:
-            base_footer += f"\n_TrendRadar 发现新版本 *{update_info['remote_version']}*，当前 *{update_info['current_version']}_"
 
     # 根据 display_mode 选择统计标题
     stats_title = "热点词汇统计" if display_mode == "keyword" else "热点新闻统计"
@@ -917,6 +871,10 @@ def split_content_into_batches(
     # 完成最后批次
     if current_batch_has_content:
         _safe_append_batch(batches, current_batch, base_footer, max_bytes, base_header)
+
+    # 去掉每个批次首尾多余的空白行：分批时各区域前会插入空行分隔，
+    # 头部取消后这些空行会落到消息开头，形成大片留白
+    batches = [b.strip("\n") for b in batches if b.strip()]
 
     return batches
 

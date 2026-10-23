@@ -11,24 +11,18 @@ from typing import List
 def get_batch_header(format_type: str, batch_num: int, total_batches: int) -> str:
     """根据 format_type 生成对应格式的批次头部
 
+    已不再输出「[第 X/Y 批次]」标记：分批只是受渠道长度限制的发送手段，
+    对阅读者没有意义，反而在每条消息顶部形成噪声。保留函数签名以便调用方兼容。
+
     Args:
         format_type: 推送类型（telegram, slack, wework_text, bark, feishu, dingtalk, ntfy, wework）
         batch_num: 当前批次编号
         total_batches: 总批次数
 
     Returns:
-        格式化的批次头部字符串
+        空字符串（不再添加批次头部）
     """
-    if format_type == "telegram":
-        return f"<b>[第 {batch_num}/{total_batches} 批次]</b>\n\n"
-    elif format_type == "slack":
-        return f"*[第 {batch_num}/{total_batches} 批次]*\n\n"
-    elif format_type in ("wework_text", "bark"):
-        # 企业微信文本模式和 Bark 使用纯文本格式
-        return f"[第 {batch_num}/{total_batches} 批次]\n\n"
-    else:
-        # 飞书、钉钉、ntfy、企业微信 markdown 模式
-        return f"**[第 {batch_num}/{total_batches} 批次]**\n\n"
+    return ""
 
 
 def get_max_batch_header_size(format_type: str) -> int:
