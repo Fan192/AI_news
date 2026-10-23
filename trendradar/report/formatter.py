@@ -107,6 +107,8 @@ def format_title_for_platform(
 
     elif platform in ("wework", "bark"):
         # WeWork 和 Bark 使用 markdown 格式
+        # 只保留「[来源] 标题」本身：排名 [87]、时间 10-23 05:03、(N次) 都是尾部噪声，
+        # 每条新闻后面都堆一截，干扰阅读，企业微信/Bark 不再输出
         if link_url:
             formatted_title = f"[{cleaned_title}]({link_url})"
         else:
@@ -120,13 +122,6 @@ def format_title_for_platform(
             result = f"[{keyword}] {title_prefix}{formatted_title}"
         else:
             result = f"{title_prefix}{formatted_title}"
-
-        if rank_display:
-            result += f" {rank_display}"
-        if title_data["time_display"]:
-            result += f" - {title_data['time_display']}"
-        if title_data["count"] > 1:
-            result += f" ({title_data['count']}次)"
 
         return result
 

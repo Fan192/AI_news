@@ -208,6 +208,8 @@ def _load_rss_config(config_data: Dict) -> Dict:
         "FEEDS": rss.get("feeds", []),
         # RSS 关键词统计中要隐藏的词组（按词组显示名匹配，不影响国内热榜）
         "EXCLUDE_WORD_GROUPS": rss.get("exclude_word_groups", []),
+        # 「RSS 订阅统计」推送总条数上限（0=不限制）
+        "MAX_TOTAL_ITEMS": rss.get("max_total_items", 0),
         "FRESHNESS_FILTER": {
             "ENABLED": freshness_filter.get("enabled", True),  # 默认启用
             "MAX_AGE_DAYS": max_age_days,

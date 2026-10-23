@@ -124,6 +124,10 @@ rss:
     - OpenAI / Claude
     - 特斯拉
 
+  # 「📰 RSS 订阅统计」推送总条数上限（0=不限制）
+  # 超出时按来源（媒体）轮流挑选，尽量让每个媒体条数均衡
+  max_total_items: 6
+
   # 单个 feed 可配置 max_age_days 覆盖全局设置：
   # - 不配置：使用全局 freshness_filter.max_age_days（默认 3 天）
   # - 正整数：覆盖全局设置，只推送此天数内的文章

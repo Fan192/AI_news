@@ -421,6 +421,75 @@ class AppContext:
             show_new_section=self.show_new_section,
         )
 
+    def _limit_rss_stats(self, rss_items: Optional[list]):
+        """限制「RSS 订阅统计」的推送条数，并按媒体轮流分配
+
+        同一篇文章可能同时命中多个关键词词组，先按 URL 去重，再按来源（媒体）
+        轮流取，保证每个媒体条数尽量均衡，避免某一家媒体占满配额。
+
+        Args:
+            rss_items: RSS 关键词统计列表（与热榜 stats 结构一致）
+
+        Returns:
+            截断后的统计列表；未配置上限时原样返回
+        """
+        max_total = self.config.get("RSS", {}).get("MAX_TOTAL_ITEMS", 0)
+        if not rss_items or max_total <= 0:
+            return rss_items
+
+        # 1. 展平并去重，按来源分组（保留首次出现顺序）
+        feed_order: List[str] = []
+        buckets: Dict[str, List[Tuple[Dict, Dict]]] = {}
+        seen = set()
+        for stat in rss_items:
+            for title in stat.get("titles", []):
+                key = title.get("url") or title.get("title") or ""
+                if key in seen:
+                    continue
+                seen.add(key)
+                feed = title.get("source_name") or "未知来源"
+                if feed not in buckets:
+                    buckets[feed] = []
+                    feed_order.append(feed)
+                buckets[feed].append((stat, title))
+
+        total_available = sum(len(v) for v in buckets.values())
+        if total_available <= max_total:
+            return rss_items
+
+        # 2. 按媒体轮流挑选，直到达到上限
+        picked: List[Tuple[Dict, Dict]] = []
+        round_idx = 0
+        while len(picked) < max_total:
+            advanced = False
+            for feed in feed_order:
+                if round_idx < len(buckets[feed]):
+                    picked.append(buckets[feed][round_idx])
+                    advanced = True
+                    if len(picked) >= max_total:
+                        break
+            if not advanced:
+                break
+            round_idx += 1
+
+        # 3. 按原词组顺序重建统计，丢弃没有条目的词组
+        picked_ids = {id(title) for _, title in picked}
+        new_stats = []
+        for stat in rss_items:
+            kept = [t for t in stat.get("titles", []) if id(t) in picked_ids]
+            if not kept:
+                continue
+            new_stat = dict(stat)
+            new_stat["titles"] = kept
+            new_stat["count"] = len(kept)
+            new_stats.append(new_stat)
+
+        print(
+            f"[RSS] 订阅统计限流：{total_available} 条 -> {len(picked)} 条"
+            f"（{len(set(t.get('source_name') for _, t in picked))} 个媒体轮流选取）"
+        )
+        return new_stats
+
     def split_content(
         self,
         report_data: Dict,
@@ -453,6 +522,9 @@ class AppContext:
         Returns:
             分批后的消息内容列表
         """
+        # 「RSS 订阅统计」限流：按媒体轮流挑选，控制在配置的条数内
+        rss_items = self._limit_rss_stats(rss_items)
+
         return split_content_into_batches(
             report_data=report_data,
             format_type=format_type,
